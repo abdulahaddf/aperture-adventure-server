@@ -2,6 +2,7 @@ const express = require('express');
 const app = express();
 const cors = require('cors');
 const port = process.env.PORT || 5000;
+require('dotenv').config()
 const { MongoClient, ServerApiVersion } = require('mongodb');
 
 //middleware
@@ -41,7 +42,7 @@ async function run() {
         console.log(user);
         const query = { email: user.email }
         const existingUser = await usersCollection.findOne(query);
-
+  
         if (existingUser) {
           return res.send({ message: 'user exists' })
         }
