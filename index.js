@@ -4,7 +4,7 @@ const cors = require('cors');
 const jwt = require('jsonwebtoken');
 const port = process.env.PORT || 5000;
 require('dotenv').config()
-const { MongoClient, ServerApiVersion } = require('mongodb');
+const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 
 //middleware
 app.use(cors());
@@ -47,6 +47,7 @@ async function run() {
 
     const usersCollection = client.db("adventureDB").collection("users");
     const classCollection = client.db("adventureDB").collection("classes");
+    const selectCollection = client.db("adventureDB").collection("selected");
 
 
 
@@ -66,7 +67,7 @@ async function run() {
 
 
     //user related api
-    app.get('/users',verifyJWT, async (req, res) => {
+    app.get('/users', async (req, res) => {
         const result = await usersCollection.find().toArray();
         res.send(result);
       });
@@ -86,6 +87,64 @@ async function run() {
 
 
 
+//admin related api
+app.get('/users/admin/:email',verifyJWT, async (req, res) => {
+  const email = req.params.email;
+  console.log(email);
+  const query = { email: email }
+  const user = await usersCollection.findOne(query);
+  const result = { admin: user?.role === 'admin' }
+  res.send(result);
+})
+
+app.patch('/users/admin/:id', async (req, res) => {
+  const id = req.params.id;
+  console.log('id of user',id);
+  const filter = { _id: new ObjectId(id) };
+  const updateDoc = {
+    $set: {
+      role: 'admin'
+    },
+  };
+  console.log(updateDoc);
+
+  const result = await usersCollection.updateOne(filter, updateDoc);
+  res.send(result);
+
+})
+
+
+// instructor related api
+app.get('/users/instructor/:email',verifyJWT, async (req, res) => {
+  const email = req.params.email;
+  console.log(email);
+  const query = { email: email }
+  const user = await usersCollection.findOne(query);
+  const result = { instructor: user?.role === 'instructor' }
+  res.send(result);
+})
+app.patch('/users/instructor/:id', async (req, res) => {
+  const id = req.params.id;
+  console.log('id of user',id);
+  const filter = { _id: new ObjectId(id) };
+  const updateDoc = {
+    $set: {
+      role: 'instructor'
+    },
+  };
+  console.log(updateDoc);
+
+  const result = await usersCollection.updateOne(filter, updateDoc);
+  res.send(result);
+
+})
+
+
+
+
+
+
+
 // class related apis
 app.get('/class', async (req, res) => {
   const result = await classCollection.find().toArray();
@@ -98,13 +157,28 @@ app.post('/class', async (req, res) => {
   res.send(result);
 })
 
+//get classes by email
+app.get('/myclass', async (req, res) => {
+  const email = req.query.email;
+  console.log('email coming', email);
+  const query = { instructorEmail: email };
+  const result = await classCollection.find(query).toArray();
+  res.send(result);
+});
 
 
 
 
 
+ // cart collection apis
 
-
+app.post('/select', async (req, res) => {
+  const item = req.body;
+  console.log(item);
+  const result = await selectCollection.insertOne(item);
+  console.log(result);
+  res.send(result);
+})
 
 
 
