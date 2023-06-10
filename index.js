@@ -171,6 +171,13 @@ app.get('/myclass', async (req, res) => {
 
 
  // cart collection apis
+ app.get('/select', verifyJWT, async (req, res) => {
+  const email = req.query.email;
+
+  const query = { email: email };
+  const result = await selectCollection.find(query).toArray();
+  res.send(result);
+});
 
 app.post('/select', async (req, res) => {
   const item = req.body;
