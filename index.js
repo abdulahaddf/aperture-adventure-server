@@ -171,7 +171,7 @@ app.get('/myclass', async (req, res) => {
 
 
  // cart collection apis
- app.get('/select', verifyJWT, async (req, res) => {
+ app.get('/select', async (req, res) => {
   const email = req.query.email;
 
   const query = { email: email };
@@ -187,12 +187,7 @@ app.post('/select', async (req, res) => {
   res.send(result);
 })
 
-app.delete('/select/:id', async (req, res) => {
-  const id = req.params.id;
-  const query = { _id: new ObjectId(id) };
-  const result = await selectCollection.deleteOne(query);
-  res.send(result);
-})
+
 
 
 
