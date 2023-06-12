@@ -5,6 +5,7 @@ const jwt = require("jsonwebtoken");
 const port = process.env.PORT || 5000;
 require("dotenv").config();
 const { MongoClient, ServerApiVersion, ObjectId } = require("mongodb");
+const stripe = require("stripe")(process.env.PAYMENT_SECRET_KEY)
 
 //middleware
 app.use(cors());
@@ -50,6 +51,7 @@ async function run() {
     const usersCollection = client.db("adventureDB").collection("users");
     const classCollection = client.db("adventureDB").collection("classes");
     const selectCollection = client.db("adventureDB").collection("selected");
+    const paymentCollection = client.db("adventureDB").collection("payments");
 
     app.post("/jwt", (req, res) => {
       const user = req.body;
@@ -172,6 +174,45 @@ async function run() {
       res.send(result);
     });
 
+
+ // payment intent
+ app.post('/create-payment-intent',  async (req, res) => {
+  console.log(req);
+  const { price } = req.body
+  const amount = parseFloat(price) * 100
+  if (!price) return
+  const paymentIntent = await stripe.paymentIntents.create({
+    amount: amount,
+    currency: 'usd',
+    payment_method_types: ['card'],
+  })
+
+  res.send({
+    clientSecret: paymentIntent.client_secret,
+  })
+})
+
+// payment related api
+app.post('/payments', async (req, res) => {
+  const payment = req.body
+  console.log('pay',payment);
+  const result = await paymentCollection.insertOne(payment)
+  console.log('res',result);
+  res.send(result)
+})
+
+
+
+//find enrolled classes
+app.get("/enrolled", async (req, res) => {
+  const email = req.query.email;
+  const query = { email: email };
+  const result = await paymentCollection.find(query).sort({ date: -1 }).toArray();
+  res.send(result);
+});
+
+
+
     // Send a ping to confirm a successful connection
     await client.db("admin").command({ ping: 1 });
     console.log(
@@ -191,3 +232,4 @@ app.get("/", (req, res) => {
 app.listen(port, () => {
   console.log(`Aperture server listening on ${port}`);
 });
+
